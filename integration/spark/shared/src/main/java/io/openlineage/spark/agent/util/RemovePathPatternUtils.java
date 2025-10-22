@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -19,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
  * with "remove" group defined, class methods run regex replacements on all the datasets available
  * within the event
  */
+@Slf4j
 public class RemovePathPatternUtils {
   public static final String REMOVE_PATTERN_GROUP = "remove";
   public static final String SPARK_OPENLINEAGE_DATASET_REMOVE_PATH_PATTERN =
@@ -52,7 +55,7 @@ public class RemovePathPatternUtils {
 
   public static List<InputDataset> removeInputsPathPattern(
       OpenLineageContext context, List<InputDataset> outputs) {
-    return getPattern(context)
+    List<InputDataset> results = getPattern(context)
         .map(
             pattern ->
                 outputs.stream()
@@ -65,6 +68,9 @@ public class RemovePathPatternUtils {
                                 .newInputDatasetBuilder()
                                 .name(newName)
                                 .namespace(dataset.getNamespace())
+                                .query(dataset.getQuery())
+                                .defaultDatabase(dataset.getDefaultDatabase())
+                                .defaultSchema(dataset.getDefaultSchema())
                                 .facets(dataset.getFacets())
                                 .inputFacets(dataset.getInputFacets())
                                 .build();
@@ -74,6 +80,9 @@ public class RemovePathPatternUtils {
                         })
                     .collect(Collectors.toList()))
         .orElse(outputs);
+    String datasetDetails = results.stream().map(d -> d.getName() + "(" + d.getDefaultDatabase() + ", " + d.getDefaultSchema() + ") =" + d.getQuery()).collect(Collectors.joining("; "));
+    log.info("NATHAN: removeInputsPathPattern results: {}", datasetDetails);
+    return results;
   }
 
   private static Optional<Pattern> getPattern(OpenLineageContext context) {

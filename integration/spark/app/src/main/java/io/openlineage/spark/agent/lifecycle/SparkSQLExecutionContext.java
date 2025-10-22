@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.scheduler.ActiveJob;
 import org.apache.spark.scheduler.JobFailed;
@@ -108,11 +110,8 @@ class SparkSQLExecutionContext implements ExecutionContext {
                 .jobBuilder(buildJob())
                 .jobFacetsBuilder(getJobFacetsBuilder(olContext.getQueryExecution().get()))
                 .build());
-
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "Posting event for start {}: {}", executionId, OpenLineageClientUtils.toJson(event));
-    }
+      log.info(
+          "NATHAN: Posting event for start {}: {}", executionId, OpenLineageClientUtils.toJson(event));
 
     eventEmitter.emit(event);
   }

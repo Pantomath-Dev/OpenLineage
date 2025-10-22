@@ -12,6 +12,8 @@ import io.openlineage.client.OpenLineage.OutputDataset;
 import io.openlineage.client.OpenLineage.OutputDatasetOutputFacetsBuilder;
 import io.openlineage.client.dataset.DatasetConfig;
 import io.openlineage.client.dataset.FacetUtils;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
  * with a trimmed name and locations' based subset definition facet with a non-trimmed name of a
  * dataset.
  */
+@Slf4j
 public class DatasetReducer {
 
   private final DatasetConfig datasetConfig;
@@ -59,13 +62,20 @@ public class DatasetReducer {
    */
   public List<InputDataset> reduceInputs(List<InputDataset> datasets) {
     if (datasetConfig == null) {
+      log.info("NATHAN: DatasetConfig is null, skipping reduction");
       return datasets;
     }
 
+    List<Dataset> preReducedDatasets = datasets.stream().map(Dataset.class::cast).collect(Collectors.toList());
+    String datasetDescriptions = preReducedDatasets.stream().map(r -> r.getName() + "=" + r.getQuery()).collect(Collectors.joining(", "));
+    log.info("NATHAN: Input datasets before reduction: {}", datasetDescriptions);
+
     // reduce datasets
     List<ReducedDataset> reduced =
-        reducedDatasets(datasets.stream().map(Dataset.class::cast).collect(Collectors.toList()));
+        reducedDatasets(preReducedDatasets);
 
+    String reducedDescriptions = reduced.stream().map(r -> r.getTrimmedDatasetName() + "=" + r.getDataset().getQuery()).collect(Collectors.joining(", "));
+    log.info("NATHAN: Reduced input datasets: {}", reducedDescriptions);
     return reduced.stream()
         .map(
             r -> {
@@ -73,6 +83,7 @@ public class DatasetReducer {
               InputDatasetInputFacetsBuilder facetsBuilder =
                   FacetUtils.toBuilder(openLineage, source.getInputFacets());
               if (!r.getNonTrimmedNames().isEmpty()) {
+                log.info("NATHAN: Adding subset facet for dataset {} with locations: {}", r.getTrimmedDatasetName(), r.getNonTrimmedNames());
                 facetsBuilder.subset(
                     openLineage
                         .newInputSubsetInputDatasetFacetBuilder()
@@ -83,9 +94,13 @@ public class DatasetReducer {
                                 .build())
                         .build());
               }
+              log.info("NATHAN: Building reduced input dataset with name={}, query={}, defaultDatabase={}, defaultSchema={}", r.getTrimmedDatasetName(), source.getQuery(), source.getDefaultDatabase(), source.getDefaultSchema());
               return openLineage
                   .newInputDatasetBuilder()
                   .name(r.getTrimmedDatasetName())
+                  .query(source.getQuery())
+                  .defaultDatabase(source.getDefaultDatabase())
+                  .defaultSchema(source.getDefaultSchema())
                   .namespace(source.getNamespace())
                   .inputFacets(facetsBuilder.build())
                   .facets(source.getFacets())
@@ -154,6 +169,7 @@ public class DatasetReducer {
                       l1.addAll(l2);
                       return l1;
                     }));
+    log.info("NATHAN: Datasets grouped by trimmed name: {}", toReduce);
 
     // Reducing logic is a bit more complex than just creating map based on trimmed name
     // If there are datasets with the same trimmed name but different facets, we can't reduce them
@@ -180,6 +196,8 @@ public class DatasetReducer {
       }
       reducedDatasets.addAll(sameNameList);
     }
+
+    log.info("NATHAN: Reduced datasets: {}", reducedDatasets);
     return reducedDatasets;
   }
 }

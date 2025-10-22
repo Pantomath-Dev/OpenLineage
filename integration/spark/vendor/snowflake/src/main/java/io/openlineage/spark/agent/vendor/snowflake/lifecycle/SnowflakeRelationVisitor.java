@@ -13,8 +13,12 @@ import io.openlineage.spark.agent.vendor.snowflake.lifecycle.plan.SnowflakeSaveI
 import io.openlineage.spark.api.DatasetFactory;
 import io.openlineage.spark.api.OpenLineageContext;
 import io.openlineage.spark.api.QueryPlanVisitor;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import net.snowflake.spark.snowflake.Parameters.MergedParameters;
 import net.snowflake.spark.snowflake.SnowflakeRelation;
@@ -66,6 +70,9 @@ public class SnowflakeRelationVisitor<D extends OpenLineage.Dataset>
     Optional<String> dbtable =
         ScalaConversionUtils.asJavaOptional(params.table()).map(TableName::toString);
     Optional<String> query = ScalaConversionUtils.asJavaOptional(params.query());
+
+    log.info("NATHAN: SnowflakeRelationVisitor detected SnowflakeRelation with dbtable={} query={}", dbtable.orElse("NO_DTABLE"), query.orElse("NO_QUERY"));
+    log.info("NATHAN: stack trace: {}", Arrays.stream(Thread.currentThread().getStackTrace()).map(StackTraceElement::toString).collect(Collectors.joining("\n")));
 
     return SnowflakeDataset.getDatasets(
         factory, sfFullURL, sfDatabase, sfSchema, dbtable, query, relation.schema());

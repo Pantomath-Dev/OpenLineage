@@ -31,6 +31,21 @@ public class SqlUtils {
       String defaultDatabase,
       String defaultSchema) {
     Optional<SqlMeta> sqlMeta = OpenLineageSql.parse(Collections.singletonList(sql), dialect);
+    if (!sqlMeta.isPresent()) {
+      log.info("NATHAN: Unable to parse SQL, adding to dataset {}", sql);
+        // Failed to parse any sources. Create an empty dataset with the query, namespace, and default database and schema
+      D dataset = datasetFactory.getDataset(
+          new DatasetIdentifier(
+              "",
+              namespace),
+          sql,
+          defaultDatabase,
+          defaultSchema,
+          datasetFactory.createCompositeFacetBuilder());
+      String resultDetails = dataset.getName() + "(" + dataset.getDefaultDatabase() + ", " + dataset.getDefaultSchema() + ") =" + dataset.getQuery();
+      log.info("NATHAN: Created dataset for unparsed SQL with inputs: {}", resultDetails);
+      return Collections.singletonList(dataset);
+    }
     return sqlMeta
         .map(
             meta ->
@@ -41,6 +56,9 @@ public class SqlUtils {
                               new DatasetIdentifier(
                                   getName(defaultDatabase, defaultSchema, dbtm.qualifiedName()),
                                   namespace),
+                              sql,
+                              defaultDatabase,
+                              defaultSchema,
                               datasetFactory.createCompositeFacetBuilder());
                         })
                     .collect(Collectors.toList()))
