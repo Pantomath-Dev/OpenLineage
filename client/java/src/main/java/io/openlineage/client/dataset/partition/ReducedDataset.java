@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Intermediate data structure to store datasets while being reduced.
@@ -37,7 +36,6 @@ import lombok.extern.slf4j.Slf4j;
  * with a trimmed name and locations' based subset definition facet with a non-trimmed name of a
  * dataset.
  */
-@Slf4j
 class ReducedDataset {
 
   @Getter private final String trimmedDatasetName;
@@ -55,7 +53,6 @@ class ReducedDataset {
         new DatasetIdentifier(dataset.getName(), dataset.getNamespace())
             .withTrimmedName(trimmers)
             .getName();
-    log.info("NATHAN: Trimmed name: {} from original name: {}", trimmedDatasetName, dataset.getName());
     this.nonTrimmedNames = new ArrayList<>();
     if (!Objects.equals(trimmedDatasetName, dataset.getName())) {
       // reduced names are different from trimmed name -> add it

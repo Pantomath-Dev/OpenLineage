@@ -92,7 +92,6 @@ public abstract class DatasetFactory<D extends Dataset> {
       @Override
       public OpenLineage.Builder<OpenLineage.InputDataset> datasetBuilder(
           String name, String namespace, String query, String defaultDatabase, String defaultSchema, DatasetCompositeFacetsBuilder facetsBuilder) {
-        log.info("NATHAN: Creating input dataset using builder={} for name: {} in namespace: {} with query: {}, defaultDatabase: {}, defaultSchema: {}", this.getClass().getTypeName(), name, namespace, query, defaultDatabase, defaultSchema);
         return context
             .getOpenLineage()
             .newInputDatasetBuilder()
@@ -380,7 +379,6 @@ public abstract class DatasetFactory<D extends Dataset> {
      */
     public D getDataset(DatasetIdentifier ident, String query, String defaultDatabase, String defaultSchema, DatasetCompositeFacetsBuilder facetsBuilder) {
         includeSymlinksFacet(facetsBuilder, ident);
-        log.info("NATHAN: Creating dataset using builder={} for ident: {} with query: {}, defaultDatabase: {}, defaultSchema: {}", this.getClass().getTypeName(), ident, query, defaultDatabase, defaultSchema);
         return datasetBuilder(ident.getName(), ident.getNamespace(), query, defaultDatabase, defaultSchema, facetsBuilder).build();
     }
 

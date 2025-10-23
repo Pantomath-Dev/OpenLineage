@@ -219,12 +219,7 @@ class OpenLineageRunEventBuilder {
         .outputs(
             RemovePathPatternUtils.removeOutputsPathPattern(openLineageContext, outputDatasets));
 
-    log.info("NATHAN: Built RunEvent with eventType={}, eventClass={}, runId={}, inputs={}, outputs={}", context.getEventType(), context.getEvent().getClass().getTypeName(), runId, inputDatasets.size(), outputDatasets.size());
-
-    RunEvent run = context.getRunEventBuilder().build();
-    String datasetDetails = run.getInputs().stream().map(d -> d.getName() + "(" + d.getDefaultDatabase() + ", " + d.getDefaultSchema() + ") =" + d.getQuery()).collect(Collectors.joining("; "));
-    log.info("NATHAN: Final RunEvent input datasets: {}", datasetDetails);
-    return run;
+    return context.getRunEventBuilder().build();
   }
 
   RunFacetsBuilder constructRunFacetsBuilder(
@@ -270,15 +265,11 @@ class OpenLineageRunEventBuilder {
                                 .map(((Class<InputDataset>) InputDataset.class)::cast))
                     .orElse(Stream.empty()))
             .collect(Collectors.toList());
-    String orignalDatasets = datasets.stream().map(d -> d.getName() + "(" + d.getDefaultDatabase() + ", " + d.getDefaultSchema() + ") =" + d.getQuery()).collect(Collectors.joining("; "));
-    log.info("NATHAN: original input datasets: {}", orignalDatasets);
     datasets =
         new DatasetReducer(
                 openLineageContext.getOpenLineage(),
                 openLineageContext.getOpenLineageConfig().getDatasetConfig())
             .reduceInputs(datasets);
-    String datasetDetails = datasets.stream().map(d -> d.getName() + "(" + d.getDefaultDatabase() + ", " + d.getDefaultSchema() + ") =" + d.getQuery()).collect(Collectors.joining("; "));
-    log.info("NATHAN: got reduced input datasets: {}", datasetDetails);
     OpenLineage openLineage = openLineageContext.getOpenLineage();
     openLineageContext.getVisitedNodes().clearVisitedNodes();
     if (!datasets.isEmpty()) {
@@ -304,8 +295,6 @@ class OpenLineageRunEventBuilder {
                       .facets(mergeFacets(datasetFacetsMap, ds.getFacets(), DatasetFacets.class))
                       .build())
           .collect(Collectors.toList());
-      String resultDetails = results.stream().map(d -> d.getName() + "(" + d.getDefaultDatabase() + ", " + d.getDefaultSchema() + ") =" + d.getQuery()).collect(Collectors.joining("; "));
-      log.info("NATHAN: Built resulting input datasets: {}", resultDetails);
       return results;
     }
     return datasets;
