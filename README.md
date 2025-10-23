@@ -9,6 +9,39 @@
   <img src="./doc/openlineage-lfai-logo.png" width="754px"/>
 </div>
 
+## Pantomath Notes
+This is a fork of the OpenLineage project. Some changes have been made to do the following:
+- Add workspace URLs to Databricks environment-properties facets
+- Remove a filter that prevented Databricks jobs from emitting events we need
+- Add the Oracle user as the schema to datasets when using Oracle as a source or target
+- Add the following fields to support Snowflake raw queries:
+  - query
+  - defaultSchema
+  - defaultDatabase
+
+### How to build
+To build the project, navigate to the `integrations/spark` directory and run:
+```bash
+./buildDependences.sh
+```
+then
+```bash
+./gradlew shadowJar
+```
+
+The resulting JAR file will be located in `integrations/spark/build/libs/`.
+
+#### Rebuilding after changes
+
+After any changes to the `integrations/spark` code, rerun the `shadowJar` command to rebuild the JAR.
+
+Any changes to other directories (usually the `client` directory) will require the `buildDependences.sh` script to be run again before rebuilding the JAR.
+
+### Building Scala 2.13 version
+By default, only the Scala 2.12 version is built. 
+To build the Scala 2.13 version, change the `scala.binary.version` value in `integrations/spark/gradle.properties` to `2.13` and run the build commands above.
+You may need to change the `spark.version` property as well to ensure compatibility with Spark versions that support Scala 2.13.
+
 ## Overview
 OpenLineage is an Open standard for metadata and lineage collection designed to instrument jobs as they are running.
 It defines a generic model of run, job, and dataset entities identified using consistent naming strategies.
