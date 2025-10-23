@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openlineage.io/spec/2-0-2/OpenLineage.json",
+  "$id": "https://openlineage.io/spec/2-1-0/OpenLineage.json",
   "$defs": {
     "BaseEvent": {
       "type": "object",
@@ -244,6 +244,21 @@
           "description": "The unique name for that dataset within that namespace",
           "type": "string",
           "example": "instance.schema.table"
+        },
+        "query": {
+          "description": "The query used to produce this dataset, if applicable",
+          "type": "string",
+          "example": "SELECT * FROM table WHERE date = '2024-01-01'"
+        },
+        "defaultDatabase": {
+          "description": "The default database to use when accessing this dataset, if applicable",
+          "type": "string",
+          "example": "my_database"
+        },
+        "defaultSchema": {
+          "description": "The default schema to use when accessing this dataset, if applicable",
+          "type": "string",
+          "example": "my_schema"
         },
         "facets": {
           "description": "The facets for this dataset",

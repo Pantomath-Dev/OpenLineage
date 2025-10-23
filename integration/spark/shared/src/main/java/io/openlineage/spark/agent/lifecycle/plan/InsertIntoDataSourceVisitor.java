@@ -67,7 +67,7 @@ public class InsertIntoDataSourceVisitor
                     context
                         .getOpenLineage()
                         .newOutputDataset(
-                            ds.getNamespace(), ds.getName(), facets, ds.getOutputFacets());
+                            ds.getNamespace(), ds.getName(), null, null, null, facets, ds.getOutputFacets());
                 return newDs;
               }
               return ds;

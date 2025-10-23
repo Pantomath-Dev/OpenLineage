@@ -25,6 +25,8 @@ import io.openlineage.spark.agent.util.PlanUtils;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.types.StructType;
 
 /**
@@ -44,6 +46,7 @@ import org.apache.spark.sql.types.StructType;
  *
  * @param <D> the implementation of {@link Dataset} constructed by this factory
  */
+@Slf4j
 public abstract class DatasetFactory<D extends Dataset> {
   private final OpenLineageContext context;
   protected final DatasetNamespaceCombinedResolver namespaceResolver;
@@ -55,6 +58,9 @@ public abstract class DatasetFactory<D extends Dataset> {
 
   abstract OpenLineage.Builder<D> datasetBuilder(
       String name, String namespace, DatasetCompositeFacetsBuilder facetsBuilder);
+
+  abstract OpenLineage.Builder<D> datasetBuilder(
+      String name, String namespace, String query, String defaultDatabase, String defaultSchema, DatasetCompositeFacetsBuilder facetsBuilder);
 
   @Deprecated
   abstract OpenLineage.Builder<D> datasetBuilder(
@@ -79,6 +85,21 @@ public abstract class DatasetFactory<D extends Dataset> {
             .newInputDatasetBuilder()
             .namespace(namespaceResolver.resolve(namespace))
             .name(name)
+            .inputFacets(facetsBuilder.getInputFacets().build())
+            .facets(facetsBuilder.getFacets().build());
+      }
+
+      @Override
+      public OpenLineage.Builder<OpenLineage.InputDataset> datasetBuilder(
+          String name, String namespace, String query, String defaultDatabase, String defaultSchema, DatasetCompositeFacetsBuilder facetsBuilder) {
+        return context
+            .getOpenLineage()
+            .newInputDatasetBuilder()
+            .namespace(namespaceResolver.resolve(namespace))
+            .name(name)
+            .query(query)
+            .defaultDatabase(defaultDatabase)
+            .defaultSchema(defaultSchema)
             .inputFacets(facetsBuilder.getInputFacets().build())
             .facets(facetsBuilder.getFacets().build());
       }
@@ -119,6 +140,21 @@ public abstract class DatasetFactory<D extends Dataset> {
             .name(name)
             .outputFacets(facetsBuilder.getOutputFacets().build())
             .facets(facetsBuilder.getFacets().build());
+      }
+
+      @Override
+      public OpenLineage.Builder<OpenLineage.OutputDataset> datasetBuilder(
+          String name, String namespace, String query, String defaultDatabase, String defaultSchema, DatasetCompositeFacetsBuilder facetsBuilder) {
+          return context
+              .getOpenLineage()
+              .newOutputDatasetBuilder()
+              .namespace(namespaceResolver.resolve(namespace))
+              .name(name)
+              .query(query)
+              .defaultDatabase(defaultDatabase)
+              .defaultSchema(defaultSchema)
+              .outputFacets(facetsBuilder.getOutputFacets().build())
+              .facets(facetsBuilder.getFacets().build());
       }
 
       @Deprecated
@@ -331,6 +367,20 @@ public abstract class DatasetFactory<D extends Dataset> {
     includeSymlinksFacet(facetsBuilder, ident);
     return datasetBuilder(ident.getName(), ident.getNamespace(), facetsBuilder).build();
   }
+
+    /**
+     * Construct a {@link Dataset} with the given {@link DatasetIdentifier}, query, and {@link
+     * OpenLineage.DatasetFacets}.
+     *
+     * @param ident
+     * @param query
+     * @param facetsBuilder
+     * @return
+     */
+    public D getDataset(DatasetIdentifier ident, String query, String defaultDatabase, String defaultSchema, DatasetCompositeFacetsBuilder facetsBuilder) {
+        includeSymlinksFacet(facetsBuilder, ident);
+        return datasetBuilder(ident.getName(), ident.getNamespace(), query, defaultDatabase, defaultSchema, facetsBuilder).build();
+    }
 
   public D getDataset(String name, String namespace) {
     return datasetBuilder(name, namespace, datasetFacetBuilder(namespace)).build();

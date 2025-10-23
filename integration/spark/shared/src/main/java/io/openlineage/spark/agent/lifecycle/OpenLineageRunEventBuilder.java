@@ -279,12 +279,15 @@ class OpenLineageRunEventBuilder {
       Map<String, DatasetFacets> datasetFacetsMap = new HashMap<>();
       nodes.forEach(
           event -> inputDatasetFacetBuilders.forEach(fn -> fn.accept(event, inputFacetsMap::put)));
-      return datasets.stream()
+      List<InputDataset> results = datasets.stream()
           .map(
               ds ->
                   openLineage
                       .newInputDatasetBuilder()
                       .name(ds.getName())
+                      .query(ds.getQuery())
+                      .defaultDatabase(ds.getDefaultDatabase())
+                      .defaultSchema(ds.getDefaultSchema())
                       .namespace(ds.getNamespace())
                       .inputFacets(
                           mergeFacets(
@@ -292,6 +295,7 @@ class OpenLineageRunEventBuilder {
                       .facets(mergeFacets(datasetFacetsMap, ds.getFacets(), DatasetFacets.class))
                       .build())
           .collect(Collectors.toList());
+      return results;
     }
     return datasets;
   }

@@ -80,6 +80,9 @@ class OpenLineageRunEventTest {
                 "ins",
                 "input",
                 null,
+                null,
+                null,
+                null,
                 ol.newInputDatasetInputFacetsBuilder()
                     .dataQualityMetrics(
                         ol.newDataQualityMetricsInputDatasetFacetBuilder()
@@ -110,6 +113,9 @@ class OpenLineageRunEventTest {
             ol.newOutputDataset(
                 "ons",
                 "output",
+                null,
+                null,
+                null,
                 null,
                 ol.newOutputDatasetOutputFacetsBuilder()
                     .outputStatistics(

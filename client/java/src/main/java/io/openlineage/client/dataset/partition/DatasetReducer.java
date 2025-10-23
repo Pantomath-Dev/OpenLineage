@@ -12,6 +12,7 @@ import io.openlineage.client.OpenLineage.OutputDataset;
 import io.openlineage.client.OpenLineage.OutputDatasetOutputFacetsBuilder;
 import io.openlineage.client.dataset.DatasetConfig;
 import io.openlineage.client.dataset.FacetUtils;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -63,8 +64,7 @@ public class DatasetReducer {
     }
 
     // reduce datasets
-    List<ReducedDataset> reduced =
-        reducedDatasets(datasets.stream().map(Dataset.class::cast).collect(Collectors.toList()));
+    List<ReducedDataset> reduced = reducedDatasets(datasets.stream().map(Dataset.class::cast).collect(Collectors.toList()));
 
     return reduced.stream()
         .map(
@@ -86,6 +86,9 @@ public class DatasetReducer {
               return openLineage
                   .newInputDatasetBuilder()
                   .name(r.getTrimmedDatasetName())
+                  .query(source.getQuery())
+                  .defaultDatabase(source.getDefaultDatabase())
+                  .defaultSchema(source.getDefaultSchema())
                   .namespace(source.getNamespace())
                   .inputFacets(facetsBuilder.build())
                   .facets(source.getFacets())

@@ -65,6 +65,9 @@ public class RemovePathPatternUtils {
                                 .newInputDatasetBuilder()
                                 .name(newName)
                                 .namespace(dataset.getNamespace())
+                                .query(dataset.getQuery())
+                                .defaultDatabase(dataset.getDefaultDatabase())
+                                .defaultSchema(dataset.getDefaultSchema())
                                 .facets(dataset.getFacets())
                                 .inputFacets(dataset.getInputFacets())
                                 .build();

@@ -43,7 +43,7 @@ public class DatabricksEventFilter implements EventFilter {
       return false;
     }
 
-    return isWriteIntoDeltaCommand() || isDisabledDatabricksPlan(event);
+    return isDisabledDatabricksPlan(event);
   }
 
   public boolean isDisabledDatabricksPlan(SparkListenerEvent ignoredEvent) {

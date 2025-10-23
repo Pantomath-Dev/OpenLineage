@@ -7,6 +7,7 @@ package io.openlineage.spark.agent.facets.builder;
 
 import io.openlineage.spark.agent.facets.EnvironmentFacet;
 import io.openlineage.spark.agent.models.DatabricksMountpoint;
+import io.openlineage.spark.agent.util.DatabricksUtils;
 import io.openlineage.spark.agent.util.ReflectionUtils;
 import io.openlineage.spark.agent.util.ScalaConversionUtils;
 import io.openlineage.spark.api.CustomFacetBuilder;
@@ -50,6 +51,8 @@ public class DatabricksEnvironmentFacetBuilder
     openLineageContext
         .getCustomEnvironmentVariables()
         .forEach(envVar -> dbProperties.put(envVar, System.getenv().get(envVar)));
+
+      DatabricksUtils.getWorkspaceUrl(openLineageContext).map(url -> dbProperties.put("pantomath.databricks.workspaceUrl", url));
   }
 
   @Override

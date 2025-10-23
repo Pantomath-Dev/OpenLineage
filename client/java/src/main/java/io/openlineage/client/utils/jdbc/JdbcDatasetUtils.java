@@ -10,6 +10,8 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +62,13 @@ public class JdbcDatasetUtils {
     String uri = jdbcUrl.replaceAll("^(?i)jdbc:", "");
     try {
       JdbcExtractor extractor = getExtractor(uri);
+      if (extractor instanceof OracleJdbcExtractor) {
+        // Oracle needs to have the user included in the table name as the schema
+        Optional<String> user = Optional.ofNullable(properties.getProperty("user", null));
+        if (user.isPresent() && !Objects.equals(parts.get(0), user.get())) {
+          parts.add(0, user.get());
+        }
+      }
       JdbcLocation location = extractor.extract(uri, properties);
       return new DatasetIdentifier(location.toName(parts), location.toNamespace());
     } catch (URISyntaxException e) {
