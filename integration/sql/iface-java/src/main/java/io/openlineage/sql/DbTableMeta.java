@@ -7,6 +7,8 @@ package io.openlineage.sql;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.util.Optional;
+
 /**
  * Represents metadata for a database table.
  */
@@ -15,6 +17,8 @@ public class DbTableMeta {
   private final String schema;
   private final String name;
   private final QuoteStyle quoteStyle;
+  private final String query;
+  private final String defaultSchema;
 
   /**
    * Creates a new DbTableMeta instance with custom quote style.
@@ -28,6 +32,8 @@ public class DbTableMeta {
     this.database = database;
     this.schema = schema;
     this.name = name;
+    this.query = null;
+    this.defaultSchema = null;
     this.quoteStyle = quoteStyle;
   }
 
@@ -42,6 +48,22 @@ public class DbTableMeta {
     this.database = database;
     this.schema = schema;
     this.name = name;
+    this.query = null;
+    this.defaultSchema = null;
+    this.quoteStyle = new QuoteStyle(null, null, null);
+  }
+
+  /**
+   * Creates a new DbTableMeta instance with default quote style and a query.
+   *
+   * @param query the SQL query string
+   */
+  public DbTableMeta(String query, String defaultSchema) {
+    this.database = null;
+    this.schema = null;
+    this.name = null;
+    this.query = query;
+    this.defaultSchema = defaultSchema;
     this.quoteStyle = new QuoteStyle(null, null, null);
   }
 
@@ -71,6 +93,20 @@ public class DbTableMeta {
   public String name() {
     return name;
   }
+
+  /**
+   * Returns the SQL query string if this metadata represents a query.
+   *
+   * @return the query text
+   */
+  public String query() { return query; }
+
+  /**
+   * Returns the default schema name if applicable.
+   *
+   * @return the default schema name
+   */
+  public String defaultSchema() { return defaultSchema; }
 
   /**
    * Returns the quote style for this table.
