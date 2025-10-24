@@ -15,11 +15,8 @@ import io.openlineage.sql.DbTableMeta;
 import io.openlineage.sql.ExtractionError;
 import io.openlineage.sql.OpenLineageSql;
 import io.openlineage.sql.SqlMeta;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
+
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -46,6 +43,17 @@ public class JdbcSparkUtils {
       return meta.inTables().stream()
           .map(
               dbtm -> {
+                if (dbtm.query() != null) {
+                  String uri = jdbcUrl.replaceAll("^(?i)jdbc:", "");
+                  DatasetIdentifier identifier = new DatasetIdentifier("", uri);
+                  return datasetFactory.getDataset(
+                      identifier,
+                      dbtm.query(),
+                      null,
+                      dbtm.defaultSchema(),
+                      datasetFactory.createCompositeFacetBuilder()
+                  );
+                }
                 DatasetIdentifier di =
                     JdbcDatasetUtils.getDatasetIdentifier(
                         jdbcUrl, dbtm.qualifiedName(), jdbcProperties);
@@ -90,13 +98,20 @@ public class JdbcSparkUtils {
     return originSchema;
   }
 
+  private static Optional<String> getParameter(String name, JDBCRelation relation) {
+    return ScalaConversionUtils.asJavaOptional(
+        relation.jdbcOptions().parameters().get(name));
+  }
+
   public static Optional<SqlMeta> extractQueryFromSpark(JDBCRelation relation) {
-    Optional<String> table =
-        ScalaConversionUtils.asJavaOptional(
-            relation.jdbcOptions().parameters().get(JDBCOptions$.MODULE$.JDBC_TABLE_NAME()));
+    Optional<String> table = JdbcSparkUtils.getParameter(JDBCOptions$.MODULE$.JDBC_TABLE_NAME(), relation);
+
+    boolean tableIsQuery = table.isPresent() && table.get().startsWith("(");
+    Optional<String> query = tableIsQuery ? table : JdbcSparkUtils.getParameter("query", relation);
+
     // in some cases table value can be "(SELECT col1, col2 FROM table_name WHERE some='filter')
     // ALIAS"
-    if (table.isPresent() && !table.get().startsWith("(")) {
+    if (!tableIsQuery) {
       DbTableMeta origin = new DbTableMeta(null, null, table.get());
       return Optional.of(
           new SqlMeta(
@@ -112,28 +127,20 @@ public class JdbcSparkUtils {
               Collections.emptyList()));
     }
 
-    String query = queryStringFromJdbcOptions(relation.jdbcOptions());
+    if (query.isPresent()) {
+      String dialect = extractDialectFromJdbcUrl(relation.jdbcOptions().url());
+      Optional<String> defaultSchema = Objects.equals(dialect, "oracle") ? getParameter("user", relation) : Optional.empty();
+      DbTableMeta origin = new DbTableMeta(query.get(), defaultSchema.orElse(null));
+      return Optional.of(
+          new SqlMeta(
+              Collections.singletonList(origin),
+              Collections.emptyList(),
+              Collections.emptyList(),
+              Collections.emptyList()));
+    }
 
-    String dialect = extractDialectFromJdbcUrl(relation.jdbcOptions().url());
-    Optional<SqlMeta> sqlMeta = OpenLineageSql.parse(Collections.singletonList(query), dialect);
-
-    if (!sqlMeta.isPresent()) { // missing JNI library
-      return sqlMeta;
-    }
-    if (!sqlMeta.get().errors().isEmpty()) { // error return nothing
-      log.error(
-          String.format(
-              "error while parsing query: %s",
-              sqlMeta.get().errors().stream()
-                  .map(ExtractionError::toString)
-                  .collect(Collectors.joining(","))));
-      return Optional.empty();
-    }
-    if (sqlMeta.get().inTables().isEmpty()) {
-      log.error("no tables defined in query, this should not happen");
-      return Optional.empty();
-    }
-    return sqlMeta;
+    log.debug("No query or table found in JDBCRelation: {}", relation);
+    return Optional.empty();
   }
 
   public static String queryStringFromJdbcOptions(JDBCOptions options) {
